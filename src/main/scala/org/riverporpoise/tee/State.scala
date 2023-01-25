@@ -5,13 +5,17 @@ package org.riverporpoise.tee
   *
   * @author dhorlick
   */
-class State
-{	
+class State(val description: String)
+{
+	override def toString =
+	{
+		description
+	}
 }
 
 object State
 {
-	val Won = new State()
-	val Lost = new State()
-	val Indeterminate = new State()
+	val Won = new State("Won")
+	val Lost = new State("Lost")
+	val Indeterminate = new State("Indeterminate")
 }

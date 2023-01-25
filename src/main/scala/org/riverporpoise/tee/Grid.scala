@@ -22,10 +22,16 @@ class Grid[T: Manifest] (private val initialRowCount : Int = 0,
 	private var theRowCount = initialRowCount
 	private var theIndicesWithinRowCount = initialIndicesWithinRowCount
 
+	/**
+	 * @param rowIndex a zero-ordered, non-negative integer
+	 * @param indexWithinRow a zero-ordered, non-negative integer
+	 */
 	def get(rowIndex : Int, indexWithinRow : Int) : T =
 	{
-		require(rowIndex < theRowCount)
-		require(indexWithinRow < theIndicesWithinRowCount)
+		// require(rowIndex < theRowCount)
+		// require(indexWithinRow < theIndicesWithinRowCount)
+		require(rowIndex >= 0)
+		require(indexWithinRow >= 0)
 		
 		grid(rowIndex)(indexWithinRow)
 	}
@@ -83,6 +89,10 @@ class Grid[T: Manifest] (private val initialRowCount : Int = 0,
 		}
 	}
 
+	/**
+	 * @param rowIndex a zero-ordered, non-negative integer
+	 * @param indexWithinRow a zero-ordered, non-negative integer
+	 */
 	def set(rowIndex : Int, indexWithinRow : Int, myElement : T) : Unit =
 	{
 		expandIfNecessary(rowIndex, indexWithinRow)
@@ -147,6 +157,11 @@ class Grid[T: Manifest] (private val initialRowCount : Int = 0,
 		Grid.translate(this, translated, path)
 
 		translated
+	}
+
+	override def size() : Int =
+	{
+		return theRowCount * indicesWithinRowCount
 	}
 }
 

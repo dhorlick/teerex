@@ -5,16 +5,16 @@ import collection.mutable.ListBuffer
 import org.riverporpoise.geometry.{DecimalCoordinates, Polygon}
 
 /**
- * A two-dimensional plane populated by tees, holes or spaces. Facilitates the rendering of a game board.
+ * A two-dimensional plane populated by tees, holes or spaces.
  *
  * @author dhorlick
  */
 class TeeGrid(private var initialRowCount : Int = 8,
 			  private var initialIndicesWithinRowCount : Int = 8)
-		extends Grid[TeeGrid.Element.Value] (
+		extends Grid[TeeGridElement.TeeGridElement] (
 			initialRowCount = initialRowCount,
 			initialIndicesWithinRowCount = initialIndicesWithinRowCount,
-			filler = TeeGrid.Element.space)
+			filler = TeeGridElement.space)
 {
 	val polygons : ListBuffer[Polygon] = new ListBuffer[Polygon]
 	
@@ -102,15 +102,5 @@ class TeeGrid(private var initialRowCount : Int = 8,
 			translate(new Path(-1*lowestY, -1*lowestX))
 		else
 			this
-	}
-}
-
-object TeeGrid
-{
-	object Element extends Enumeration
-	{
-		val tee = Value("*")
-		val hole = Value("o")
-		val space = Value(" ")
 	}
 }
