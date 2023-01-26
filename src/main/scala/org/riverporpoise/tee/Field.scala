@@ -5,6 +5,7 @@ import ProjectableInt._
 import compat.Platform
 import results.{MoveSpace, SolutionSpace}
 import text.WrappingTileSpace
+import scala.beans.BeanProperty
 
 /**
  * Models the game board for that dinnertime triangle game with all the tees (called "pegs" in the code).
@@ -380,6 +381,7 @@ object Field
 {
 	val peg = new Peg()
 	val defaultWidth : Int = 5
+	@BeanProperty var logging = false
 
 	def indexfy(coord : Coordinates) : Int =
 	{
@@ -388,13 +390,19 @@ object Field
 
 	def log(message : Any) =
 	{
-		print(System.currentTimeMillis())
-		print(": ")
-		println(message)
+		if (logging)
+		{
+			print(System.currentTimeMillis())
+			print(": ")
+			println(message)
+		}
 	}
 
 	def logTimelessly(message : Any)
 	{
-		// println(message)
+		if (logging)
+		{
+			println(message)
+		}
 	}
 }

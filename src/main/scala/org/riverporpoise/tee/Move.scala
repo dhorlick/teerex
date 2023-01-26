@@ -11,6 +11,6 @@ class Move(val direction : Direction, val startingCoords : (Int, Int))
 {
 	override def toString =
 	{
-		startingCoords + "->" + direction.oClock
+		startingCoords + "->" + direction
 	}
 }

@@ -43,7 +43,7 @@ class TriangularFieldTest
 		val bigInt1 = field.bigInt()
 		assertEquals(14, field.pegCount)
 		assertEquals(State.Indeterminate, field.state())
-		val firstMove = new Move(direction = Direction.oneOClock, (2,2))
+		val firstMove = new Move(direction = Direction.NORTHEAST, (2,2))
 		field.perform(firstMove)
 		val bigInt2 = field.bigInt()
 		assertNotSame(bigInt1, bigInt2)

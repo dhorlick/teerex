@@ -12,7 +12,7 @@ class MoveTest
 	@Test
 	def test() =
 	{
-		val move = new Move(Direction.fiveOClock, (5,5))
-		require(move.direction == Direction.fiveOClock)
+		val move = new Move(Direction.SOUTHEAST, (5,5))
+		require(move.direction == Direction.SOUTHEAST)
 	}
 }
