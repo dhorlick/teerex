@@ -42,7 +42,7 @@ abstract class MoveSpace(val concurrent : Boolean = false)
 
 	def countLeaves(f: GameSpace => Boolean): Int =
 	{
-		if (nodes.size == 0)
+		if (nodes.size == 0 && this.isInstanceOf[GameSpace])
 		{
 			if (f(this.asInstanceOf[GameSpace])) 1 else 0
 		}

@@ -1,11 +1,11 @@
 package org.riverporpoise.tee
 
+import org.riverporpoise.text.CharacterGrid
 import collection.mutable.ListBuffer
-import ProjectableInt._
 import compat.Platform
 import results.{MoveSpace, SolutionSpace}
 import text.WrappingTileSpace
-import org.riverporpoise.geometry.{DecimalCoordinates, Polygon}
+import scala.beans.BeanProperty
 
 /**
  * Models the game board for that dinnertime triangle game with all the tees (called "pegs" in the code).
@@ -15,56 +15,45 @@ import org.riverporpoise.geometry.{DecimalCoordinates, Polygon}
  *
  * The game starts with all but one hole filled with a tee.
  *
- * The game board is typically 5 spaces "wide", but this model supports variable width.
- * <pre>
- *      o
- *     * *
- *    * * *
- *   * * * *
- *  * * * * *
- * </pre>
  * Please note that not all widths may result in a winnable game, and that widths greater than 6 take a long time
  * to exhaustively solve on 2012 hardware.
  *
+ * Earlier version of TeeRex provided mutable and immutable Field subclasses. But to simplify things, we now just have mutable implementations.
+ *
  * @author dhorlick
  */
-abstract class Field(val width : Int)
+abstract class Field(val width : Int)  // TODO model height, as well
 {
-	def places : Seq[Option[Peg]]
-	def perform(move : Move) : Field
-	def unperform(move : Move) : Field
-	def resolve(index : Int) : Option[Peg]
-	def playAll(moveSpace : MoveSpace) : Unit
-	def solutionSpace : SolutionSpace
-	def arbitraryGoodMove : Option[Move]
+	def buildTeeGrid(expandToFit : Boolean = false) : TeeGrid
 
-	def numberOfPlaces() : Int =
-	{
-		Field.numberOfPlaces(width)
-	}
+	val teeGrid = buildTeeGrid()
 
 	def availableMoves : Seq[Move] =
 	{
 		val availableMoves = new ListBuffer[Move] ()
 
-		places.zipWithIndex.foreach
+		var y = 0
+		for (y <- 0 to teeGrid.rowCount - 1)
 		{
-			case (place, placeIndex) =>
-
-				if (place != None)
+			var x = 0
+			for (x <- 0 to teeGrid.indicesWithinRowCount - 1)
+			{
+				if (teeGrid.get(y, x) == TeeGridElement.tee)
 				{
 					for (direction <- Direction.values)
 					{
-						val oneAway: Coordinates = Field.project(placeIndex = placeIndex, direction = direction, distance = 1)
-						val twoAway: Coordinates = Field.project(placeIndex = placeIndex, direction = direction, distance = 2)
+						val oneAway: (Int, Int) = (y + direction.vector._1, x + direction.vector._2)
+						val twoAway: (Int, Int) = (y + (2 * direction.vector._1), x + (2 * direction.vector._2))
 
-						if (valid(oneAway) && valid(twoAway)
-							&& resolve(oneAway) != None && resolve(twoAway) == None)
+						if (valid(oneAway) && valid(twoAway) 
+								&& teeGrid.get(oneAway._1, oneAway._2) == TeeGridElement.tee 
+								&& teeGrid.get(twoAway._1, twoAway._2) == TeeGridElement.hole)
 						{
-							availableMoves.append(new Move(direction = direction, startingPlaceIndex = placeIndex))
+							availableMoves.append(new Move(direction = direction, (y, x)))
 						}
 					}
 				}
+			}
 		}
 
 		availableMoves
@@ -82,52 +71,53 @@ abstract class Field(val width : Int)
 	
 	def pegCount : Int =
 	{
-	    countWhatever((place:Option[Peg]) ⇒ place != None)
+	    countWhatever(TeeGridElement.tee)
 	}
 
 	def holeCount : Int =
 	{
-		countWhatever((place:Option[Peg]) ⇒ place == None)
+		countWhatever(TeeGridElement.hole)
 	}
 
-	private def countWhatever(f: (Option[Peg]) ⇒ Boolean) =
+	private def countWhatever(teeGridElement: TeeGridElement.TeeGridElement) =
 	{
 		var count = 0
-
-		places.foreach
+		
+		for (y <- 0 to teeGrid.rowCount - 1)
 		{
-			place : Option[Peg] =>
-
-				if (f(place))
+			var x = 0
+			for (x <- 0 to teeGrid.indicesWithinRowCount - 1)
+			{
+				if (teeGrid.get(y, x) == teeGridElement)
+				{
 					count += 1
+				}
+			}
 		}
 
 		count
 	}
 
-	def resolve(coords : Coordinates) : Option[Peg] =
+	def valid(zeroOrderedCoords: (Int, Int)) : Boolean =
 	{
-		require(valid(coords), "Invalid coordinate.")
-		resolve(coords.toZeroOrderedIndex())
-	}
-
-	def valid(coords : Coordinates) : Boolean =
-	{
-		if (!coords.valid)
-			false
-		else if (coords.rowIndex > width || coords.indexWithinRow > width)
-			false
+		if ((zeroOrderedCoords._1 >= 0)
+			&& (zeroOrderedCoords._2 >= 0)
+			&& (zeroOrderedCoords._1 < teeGrid.rowCount)
+			&& (zeroOrderedCoords._2 < teeGrid.indicesWithinRowCount))
+		{
+			true	
+		}
 		else
-			true
+		{
+			false
+		}
 	}
-
-	def performAndRecord(moves : Seq[Move]) : WrappingTileSpace
 
 	def solve() : SolutionSpace =
 	{
 		val startTime = Platform.currentTime
 		val mySolutionSpace = solutionSpace
-
+		
 		playAll(mySolutionSpace)
 		val durationInMillis = Platform.currentTime - startTime
 		println("Took "+(durationInMillis/1000L)+"."+(durationInMillis % 1000L)+" seconds to solve.")
@@ -140,58 +130,38 @@ abstract class Field(val width : Int)
 	  */
 	def bigInt() : BigInt =
 	{
-		val desc = new StringBuilder(1+places.size);
+		val desc = new StringBuilder(1+teeGrid.size);
 		desc.append("1");
 		// since we don't want to lose information from leading zero digits
 
-		places.foreach
+		teeGrid.foreach
 		{
-			place =>
-
-				if (place==None)
-					desc.append("0")
-				else
-					desc.append("1")
+			row => row.foreach
+			{ 
+				place => if (place == TeeGridElement.space)
+				{
+					desc.append("00")
+				}
+				else if (place == TeeGridElement.hole)
+				{
+					desc.append("01")
+				}
+				else if (place == TeeGridElement.tee)
+				{
+					desc.append("11")
+				}
+				else 
+				{
+					throw new UnsupportedOperationException("Unsupported place: " + place)
+				}
+			}
 		}
-
 		BigInt(desc.toString(), 2)
 	}
 
 	override def hashCode() : Int =
 	{
 		bigInt.intValue
-	}
-
-	def toTeeGrid(expandToFit : Boolean = false) : TeeGrid =
-	{
-		val teeGrid = new TeeGrid(width, (width * 2)-1)
-
-		var i = 0
-		
-		for (loopRowIndex <- 1 to width)
-		{
-			for (loopIndexWithinRow <- 1 to loopRowIndex)
-			{
-				teeGrid.set(loopRowIndex-1, (width - loopRowIndex) + ((loopIndexWithinRow-1) * 2),
-					if (places(i)==None) TeeGrid.Element.hole else TeeGrid.Element.tee)
-				i = i + 1
-			}
-		}
-
-		require(teeGrid.rowCount==width, "tee grid's height should equals the field's width… " +teeGrid.rowCount+"!="+width)
-
-		val oneHalf = BigDecimal(1)/BigDecimal(2)
-
-		val triangle = new Polygon(
-			List(
-				new DecimalCoordinates(BigDecimal((width * 2)-1) / BigDecimal(2), - oneHalf),
-				new DecimalCoordinates(-1, BigDecimal(width)),
-				new DecimalCoordinates((width * 2)-1+1, BigDecimal(width))
-			)
-		)
-		teeGrid.add(triangle, expandToFit)
-
-		teeGrid
 	}
 
 	protected def arbitraryGoodMove(fieldStatesInvestigated : ListBuffer[BigInt], undoAfterwards : Boolean) : Option[Move] =
@@ -210,8 +180,8 @@ abstract class Field(val width : Int)
 
 					try
 					{
-						val resultField : Field = perform(move)
-						val outcome = resultField.state()
+						perform(move)
+						val outcome = state()
 
 						if (outcome==State.Won)
 						{
@@ -219,7 +189,7 @@ abstract class Field(val width : Int)
 						}
 						else
 						{
-							val integerized = resultField.bigInt()
+							val integerized = bigInt()
 							if (!fieldStatesInvestigated.contains(integerized))
 							{
 								Field.logTimelessly(this)
@@ -231,7 +201,7 @@ abstract class Field(val width : Int)
 
 							if (outcome==State.Indeterminate)
 							{
-								if (resultField.arbitraryGoodMove(fieldStatesInvestigated, undoAfterwards)!=None)
+								if (arbitraryGoodMove(fieldStatesInvestigated, undoAfterwards)!=None)
 									return new Some(move)
 							}
 						}
@@ -249,62 +219,222 @@ abstract class Field(val width : Int)
 		}
 	}
 
+	def perform(move : Move) =
+	{
+		val oneAway: (Int, Int) = (move.startingCoords._1 + move.direction.vector._1, move.startingCoords._2 + move.direction.vector._2)
+		val twoAway: (Int, Int) = (move.startingCoords._1 + 2 * (move.direction.vector._1), move.startingCoords._2 + 2 * (move.direction.vector._2))
+		
+		var problem : Option[String] = None
+
+		if (!valid(move.startingCoords))
+		{
+			problem = Option("Launch spot does not exist")
+		}
+		if (!valid(oneAway))
+		{
+			problem = Option("Jump spot does not exist")
+		}
+		if (!valid(twoAway))
+		{
+			problem = Option("Target does not exist")
+		}
+		if (teeGrid.get(move.startingCoords._1, move.startingCoords._2) != TeeGridElement.tee)
+		{
+			problem = Option("Launch spot is not inhabited by a tee")
+		}
+		if (teeGrid.get(oneAway._1, oneAway._2) != TeeGridElement.tee)
+		{
+			problem = Option("Jump spot is not inhabited by a tee")
+		}
+		if (teeGrid.get(twoAway._1, twoAway._2) != TeeGridElement.hole)
+		{
+			problem = Option("Target is not inhabited by a hole")
+		}
+		if (problem != None)
+		{
+			throw new InvalidJumpException(move.startingCoords, twoAway, this, problem.get)
+		}
+
+		teeGrid.set(move.startingCoords._1, move.startingCoords._2, TeeGridElement.hole)
+		teeGrid.set(oneAway._1, oneAway._2, TeeGridElement.hole)
+		teeGrid.set(twoAway._1, twoAway._2, TeeGridElement.tee)
+	}
+
+	def unperform(move : Move) =
+	{
+		val oneAway: (Int, Int) = (move.startingCoords._1 + move.direction.vector._1, move.startingCoords._2 + move.direction.vector._2)
+		val twoAway: (Int, Int) = (move.startingCoords._1 + 2 * (move.direction.vector._1), move.startingCoords._2 + 2 * (move.direction.vector._2))
+		
+		var problem : Option[String] = None
+
+		if (!valid(move.startingCoords))
+		{
+			problem = Option("Launch spot does not exist")
+		}
+		if (!valid(oneAway))
+		{
+			problem = Option("Jump spot does not exist")
+		}
+		if (!valid(twoAway))
+		{
+			problem = Option("Target does not exist")
+		}
+		if (teeGrid.get(move.startingCoords._1, move.startingCoords._2) != TeeGridElement.hole)
+		{
+			problem = Option("Launch spot is not inhabited by a hole")
+		}
+		if (teeGrid.get(oneAway._1, oneAway._2) != TeeGridElement.hole)
+		{
+			problem = Option("Jump spot is not inhabited by a hole")
+		}
+		if (teeGrid.get(twoAway._1, twoAway._2) != TeeGridElement.tee)
+		{
+			problem = Option("Target is not inhabited by a tee")
+		}
+		if (problem != None)
+		{
+			throw new InvalidJumpException(move.startingCoords, twoAway, this, problem.get)
+		}
+		
+		teeGrid.set(move.startingCoords._1, move.startingCoords._2, TeeGridElement.tee)
+		teeGrid.set(oneAway._1, oneAway._2, TeeGridElement.tee)
+		teeGrid.set(twoAway._1, twoAway._2, TeeGridElement.hole)
+	}
+
+	/**
+	 * Will play-thru all interesting solutions and record the results to moveSpace
+	 * and moveSpace.solutionSpace. 
+	 */
+	def playAll(moveSpace : MoveSpace) : Unit =
+	{
+		val solutionSpace = moveSpace.solutionSpace
+		val moves = availableMoves
+		
+		Field.log("availableMoves.size = "+availableMoves.size)
+		
+		if (moves.length==0)
+		{
+			Field.log("No available moves, pruning movespace.")
+			moveSpace.prune()
+		}
+		else
+		{
+			moves.foreach
+			{
+				move =>
+					perform(move)
+					if (solutionSpace.registerFieldState(this))
+					{
+						Field.logTimelessly(this)
+
+						Field.log("Performed: "+move)
+
+						val subGameSpace = moveSpace.add(move, state())
+							// we could probably pinch a few bytes by not recording node associated with losses,
+							// but the resulting increase in modeling complexity probably isn't worth it.
+
+						Field.log(subGameSpace.outcome)
+
+						subGameSpace.outcome match
+						{
+							case State.Won =>
+								Field.log("won!")
+							case State.Lost =>
+							case State.Indeterminate =>
+								playAll(subGameSpace)
+
+							case _ => throw new UnsupportedOperationException("No support for outcome: "+subGameSpace.outcome)
+						}
+
+					}
+
+					Field.log("unperforming: "+move)
+					unperform(move)
+			}
+		}
+	}
+
+	def arbitraryGoodMove : Option[Move] =
+	{
+		arbitraryGoodMove(new ListBuffer[BigInt], true)
+	}
+
+	def performAndRecord(moves : Seq[Move]) : WrappingTileSpace =
+	{
+		val tileSpace = new WrappingTileSpace()
+		tileSpace.add(new CharacterGrid(this))
+
+		moves.foreach
+		{
+			move =>
+
+				perform(move)
+				val pane = new CharacterGrid(this)
+				pane.addBelow(move.toString)
+				
+				tileSpace.add(pane)
+		}
+
+		tileSpace
+	}
+
+	def solutionSpace : SolutionSpace =
+	{
+		new SolutionSpace(false)
+	}
+
+	def unperform(moves : Seq[Move]) : Unit =
+	{
+		moves.reverse.foreach
+		{
+			move =>
+
+				unperform(move)
+		}
+	}
+
+	def solveThenDocument() =
+	{
+		val solutionSpace = solve()
+		println("Results: ")
+		println(solutionSpace.toString())
+		println()
+
+		solutionSpace.bestWins.zipWithIndex.foreach
+		{
+			gameSpaceAndIndex =>
+
+				val gameSpace = gameSpaceAndIndex._1
+				val i = gameSpaceAndIndex._2
+
+				print("Unique Solution #")
+				println(i+1)
+				println
+				val moves = gameSpace.inventoryMoves
+				println(performAndRecord(moves))
+				unperform(moves)
+
+				println()
+				
+				if (i<solutionSpace.bestWins.length-1)
+					println()
+		}
+	}
+
 	override def toString() =
 	{
-		toTeeGrid().toCharacterGrid.toString
+		teeGrid.toCharacterGrid.toString
 	}
 }
 
 object Field
 {
-	val peg = new Peg()
 	val defaultWidth : Int = 5
-
-	def numberOfPlaces(width : Int) : Int =
-	{
-		width * (width + 1) / 2
-	}
-
-	def widthFromNumberOfPlaces(numberOfPlaces : Int) : Int =
-	{
-		/**    x ( x + 1 )
-		 * y = -----------
-		 *          2
-		 *
-		 * Asked Wolfram Alpha to solve 2y = x ( x + 1 ) for x
-		 *      _______
-		 *     √ 8y + 1 - 1
-		 * x = ------------
-		 *          2
-		 */
-
-		val result = ( math.pow ( (8 * numberOfPlaces + 1) , 0.5 ) - 1) / 2
-		var rounded = math.round(result).asInstanceOf[Int] : Int
-
-		if (rounded==result)
-			rounded
-		else
-			throw new IllegalArgumentException("Invalid number of places: "+numberOfPlaces)
-	}
-
-	/**
-	 * The coordinate distance spatial units away from the coordinate corresponding to placeIndex in the
-	 * provided direction.
-	 */
-	def project(placeIndex : Int, direction : Direction, distance : Int) : Coordinates =
-	{
-		val coords = Coordinates.coordinatize(placeIndex)
-		coords + distance * direction
-	}
-
-	def indexfy(coord : Coordinates) : Int =
-	{
-		coord.toZeroOrderedIndex()
-	}
+	@BeanProperty var logging = false
 
 	def log(message : Any) =
 	{
-		if (MutableField.logging)
+		if (logging)
 		{
 			print(System.currentTimeMillis())
 			print(": ")
@@ -314,7 +444,7 @@ object Field
 
 	def logTimelessly(message : Any)
 	{
-		if (MutableField.logging)
+		if (logging)
 		{
 			println(message)
 		}

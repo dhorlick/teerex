@@ -1,15 +1,20 @@
 package org.riverporpoise.tee
 
-import org.riverporpoise.tee.ProjectableInt._
 
 /**
- * Identifies a particular position on the game board. Each position can hold a peg or remain empty, in which case
- * it is known as a "hole".
+ * Identifies a particular (x, y) position on the screen. Each position can be occupied by a peg, a hold, or a void.
+ *
+ * Coordinate indices count up from one (i.e. are "one-ordered".)
+ *
+ * Not to be confused with the coordinates integer tuple used in the Field class (which is ordered (y, x).)
  *
  * @author dhorlick
  */
 class Coordinates(val rowIndex : Int, val indexWithinRow : Int)
 {
+	/**
+	 * Converts the coordinates as a unique-ish integer.
+	 */
 	def toZeroOrderedIndex() : Int =
 	{
 		var tally = 0
@@ -67,32 +72,5 @@ class Coordinates(val rowIndex : Int, val indexWithinRow : Int)
 	override def toString : String =
 	{
 		"(" + rowIndex + ", " + indexWithinRow + ")"
-	}
-}
-
-object Coordinates
-{
-	def coordinatize(targetPlaceIndex : Int) : Coordinates
-	=
-	{
-		if (targetPlaceIndex < 0)
-		{
-			/**
-			 *  Not legal for the purposes of the game, but it will simplify the type arithemtic if we
-			 *  allow it in principle.
-			 */
-			return -1 * Coordinates.coordinatize(-1 * targetPlaceIndex)
-		}
-
-		var tally, rowLoop = 0
-
-		do
-		{
-			tally += rowLoop
-			rowLoop += 1
-		}
-		while ((targetPlaceIndex + 1 > tally+rowLoop))
-
-		new Coordinates(rowLoop, targetPlaceIndex + 1 - tally)
 	}
 }

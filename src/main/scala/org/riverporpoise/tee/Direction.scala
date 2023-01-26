@@ -3,30 +3,36 @@ package org.riverporpoise.tee
 /**
  * A direction on the game board.
  *
- * For the sake of recognizability, these are named for directions on a clock face, although in truth the correlation is
- * somewhat forced.
+ * For the sake of recognizability, these are named for cardinal directions.
+ *
+ * @param vector the direction expressed as a zero-ordered slope (rise over run)
  *
  * @author dhorlick
  */
-case class Direction(oClock : Int, vector : (Int, Int))
+case class Direction(acronym : String, vector : (Int, Int))
 {
 	def *(distance : Int) : Path =
 	{
 		new Path(distance * vector._1, distance * vector._2)
 	}
+
+	override def toString =
+	{
+		acronym
+	}
 }
 
 object Direction
 {
-	val oneOClock = new Direction(1, (-1,0))
-	val threeOClock = new Direction(3, (0,1))
-	val fiveOClock = new Direction(5, (1,1))
-	val sevenOClock = new Direction(7, (1,0))
-	val nineOClock = new Direction(9, (0,-1))
-	val elevenOClock = new Direction(11, (-1,-1))
+	val NORTHEAST = new Direction("NE", (-1,1))
+	val EAST = new Direction("E", (0,2))
+	val SOUTHEAST = new Direction("SE", (1,1))
+	val SOUTHWEST = new Direction("SW", (1,-1))
+	val WEST = new Direction("W", (0,-2))
+	val NORTHWEST = new Direction("NW", (-1,-1))
 
 	def values =
 	{
-		List(oneOClock, threeOClock, fiveOClock, sevenOClock, nineOClock, elevenOClock)
+		List(NORTHEAST, EAST, SOUTHEAST, SOUTHWEST, WEST, NORTHWEST)
 	}
 }
