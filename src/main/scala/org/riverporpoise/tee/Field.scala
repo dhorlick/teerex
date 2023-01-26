@@ -429,7 +429,6 @@ abstract class Field(val width : Int)  // TODO model height, as well
 
 object Field
 {
-	val peg = new Peg()
 	val defaultWidth : Int = 5
 	@BeanProperty var logging = false
 

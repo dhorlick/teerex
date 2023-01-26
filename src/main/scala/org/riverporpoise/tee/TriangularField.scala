@@ -24,12 +24,12 @@ class TriangularField(override val width : Int = Field.defaultWidth) extends Fie
 
     def buildTeeGrid(expandToFit : Boolean = false) : TeeGrid =
 	{
-		val seq = new ListBuffer[Option[Peg]]
-		seq.append(None)
+		val seq = new ListBuffer[Boolean]
+		seq.append(false)
 		
 		for (i <- 2 to numberOfPlaces)
 		{
-			seq.append(new Some(Field.peg))
+			seq.append(true)
 		}
 		
 		val teeGrid = new TeeGrid(width, (width * 2)-1)
@@ -41,7 +41,7 @@ class TriangularField(override val width : Int = Field.defaultWidth) extends Fie
 			for (loopIndexWithinRow <- 1 to loopRowIndex)
 			{
 				teeGrid.set(loopRowIndex-1, (width - loopRowIndex) + ((loopIndexWithinRow-1) * 2),
-					if (seq(i)==None) TeeGridElement.hole else TeeGridElement.tee)
+					if (!seq(i)) TeeGridElement.hole else TeeGridElement.tee)
 				i = i + 1
 			}
 		}
