@@ -1,4 +1,4 @@
-A program to solve that awful dinnertime triangle game with the pegs.
+A program to solve that awful dinnertime triangle game with the pegs. _Or_ that puzzle from Zork Zero! 
 
 To install,
 
@@ -12,4 +12,9 @@ To install,
 To run:
 ```
 scala -cp target/classes org.riverporpoise.tee.TriangularField
+```
+
+or
+```
+scala -cp target/classes org.riverporpoise.tee.PegglebozField
 ```

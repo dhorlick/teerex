@@ -1,5 +1,6 @@
 package org.riverporpoise.tee
 
+import org.riverporpoise.text.CharacterGrid
 import collection.mutable.ListBuffer
 import compat.Platform
 import results.{MoveSpace, SolutionSpace}
@@ -23,8 +24,6 @@ import scala.beans.BeanProperty
  */
 abstract class Field(val width : Int)  // TODO model height, as well
 {
-	def solutionSpace : SolutionSpace
-	def arbitraryGoodMove : Option[Move]
 	def buildTeeGrid(expandToFit : Boolean = false) : TeeGrid
 
 	val teeGrid = buildTeeGrid()
@@ -113,8 +112,6 @@ abstract class Field(val width : Int)  // TODO model height, as well
 			false
 		}
 	}
-
-	def performAndRecord(moves : Seq[Move]) : WrappingTileSpace
 
 	def solve() : SolutionSpace =
 	{
@@ -354,6 +351,73 @@ abstract class Field(val width : Int)  // TODO model height, as well
 					Field.log("unperforming: "+move)
 					unperform(move)
 			}
+		}
+	}
+
+	def arbitraryGoodMove : Option[Move] =
+	{
+		arbitraryGoodMove(new ListBuffer[BigInt], true)
+	}
+
+	def performAndRecord(moves : Seq[Move]) : WrappingTileSpace =
+	{
+		val tileSpace = new WrappingTileSpace()
+		tileSpace.add(new CharacterGrid(this))
+
+		moves.foreach
+		{
+			move =>
+
+				perform(move)
+				val pane = new CharacterGrid(this)
+				pane.addBelow(move.toString)
+				
+				tileSpace.add(pane)
+		}
+
+		tileSpace
+	}
+
+	def solutionSpace : SolutionSpace =
+	{
+		new SolutionSpace(false)
+	}
+
+	def unperform(moves : Seq[Move]) : Unit =
+	{
+		moves.reverse.foreach
+		{
+			move =>
+
+				unperform(move)
+		}
+	}
+
+	def solveThenDocument() =
+	{
+		val solutionSpace = solve()
+		println("Results: ")
+		println(solutionSpace.toString())
+		println()
+
+		solutionSpace.bestWins.zipWithIndex.foreach
+		{
+			gameSpaceAndIndex =>
+
+				val gameSpace = gameSpaceAndIndex._1
+				val i = gameSpaceAndIndex._2
+
+				print("Unique Solution #")
+				println(i+1)
+				println
+				val moves = gameSpace.inventoryMoves
+				println(performAndRecord(moves))
+				unperform(moves)
+
+				println()
+				
+				if (i<solutionSpace.bestWins.length-1)
+					println()
 		}
 	}
 

@@ -52,45 +52,6 @@ class TriangularField(override val width : Int = Field.defaultWidth) extends Fie
 
 		teeGrid
 	}
-
-	def performAndRecord(moves : Seq[Move]) : WrappingTileSpace =
-	{
-		val tileSpace = new WrappingTileSpace()
-		tileSpace.add(new CharacterGrid(this))
-
-		moves.foreach
-		{
-			move =>
-
-				perform(move)
-				val pane = new CharacterGrid(this)
-				pane.addBelow(move.toString)
-				
-				tileSpace.add(pane)
-		}
-
-		tileSpace
-	}
-
-	def unperform(moves : Seq[Move]) : Unit =
-	{
-		moves.reverse.foreach
-		{
-			move =>
-
-				unperform(move)
-		}
-	}
-
-	override def solutionSpace : SolutionSpace =
-	{
-		new SolutionSpace(false)
-	}
-
-	def arbitraryGoodMove : Option[Move] =
-	{
-		arbitraryGoodMove(new ListBuffer[BigInt], true)
-	}
 }
 
 object TriangularField
@@ -124,30 +85,6 @@ object TriangularField
 
 	def main(args: Array[String]) =
 	{
-		val mutableField = new TriangularField()
-		val solutionSpace = mutableField.solve()
-		println("Results: ")
-		println(solutionSpace.toString())
-		println()
-
-		solutionSpace.bestWins.zipWithIndex.foreach
-		{
-			gameSpaceAndIndex =>
-
-				val gameSpace = gameSpaceAndIndex._1
-				val i = gameSpaceAndIndex._2
-
-				print("Unique Solution #")
-				println(i+1)
-				println
-				val moves = gameSpace.inventoryMoves
-				println(mutableField.performAndRecord(moves))
-				mutableField.unperform(moves)
-
-				println()
-				
-				if (i<solutionSpace.bestWins.length-1)
-					println()
-		}
+		new TriangularField().solveThenDocument()
 	}
 }
