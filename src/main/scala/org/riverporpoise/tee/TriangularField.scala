@@ -1,7 +1,5 @@
 package org.riverporpoise.tee
 
-import org.riverporpoise.geometry.DecimalCoordinates
-import org.riverporpoise.geometry.Polygon
 import collection.mutable.ListBuffer
 import results.{MoveSpace, SolutionSpace}
 import text.WrappingTileSpace
@@ -51,15 +49,6 @@ class TriangularField(override val width : Int = Field.defaultWidth) extends Fie
 		require(teeGrid.rowCount==width, "tee grid's height should equals the field's width… " +teeGrid.rowCount+"!="+width)
 
 		val oneHalf = BigDecimal(1)/BigDecimal(2)
-
-		val triangle = new Polygon(
-			List(
-				new DecimalCoordinates(BigDecimal((width * 2)-1) / BigDecimal(2), - oneHalf),
-				new DecimalCoordinates(-1, BigDecimal(width)),
-				new DecimalCoordinates((width * 2)-1+1, BigDecimal(width))
-			)
-		)
-		teeGrid.add(triangle, expandToFit)
 
 		teeGrid
 	}

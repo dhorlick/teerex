@@ -11,10 +11,5 @@ To install,
 
 To run:
 ```
-scala -cp target/classes org.riverporpoise.tee.ImmutableField
-```
-
-or:
-```
-scala -cp target/classes org.riverporpoise.tee.MutableField
+scala -cp target/classes org.riverporpoise.tee.TriangularField
 ```
