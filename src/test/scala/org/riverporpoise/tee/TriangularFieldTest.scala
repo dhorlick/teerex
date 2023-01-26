@@ -20,7 +20,6 @@ class TriangularFieldTest
 	def testMove() =
 	{
 		var field = new TriangularField(5)
-		println (field.toString())
 
 		val bigInt1 = field.bigInt()
 		assertEquals(14, field.pegCount)
@@ -38,7 +37,6 @@ class TriangularFieldTest
     def testPerform() =
 	{
 		var field = new TriangularField(5)
-		println (field.toString())
 
 		val bigInt1 = field.bigInt()
 		assertEquals(14, field.pegCount)

@@ -1,7 +1,6 @@
 package org.riverporpoise.tee
 
 import collection.mutable.ListBuffer
-import ProjectableInt._
 import compat.Platform
 import results.{MoveSpace, SolutionSpace}
 import text.WrappingTileSpace
@@ -98,19 +97,6 @@ abstract class Field(val width : Int)  // TODO model height, as well
 		}
 
 		count
-	}
-
-	/**
-	 * @deprecated use valid((Int, Int)), instead
-	 */
-	def valid(coords : Coordinates) : Boolean =
-	{
-		if (!coords.valid)
-			false
-		else if (coords.rowIndex > width || coords.indexWithinRow > width)
-			false
-		else
-			true
 	}
 
 	def valid(zeroOrderedCoords: (Int, Int)) : Boolean =
@@ -382,11 +368,6 @@ object Field
 	val peg = new Peg()
 	val defaultWidth : Int = 5
 	@BeanProperty var logging = false
-
-	def indexfy(coord : Coordinates) : Int =
-	{
-		coord.toZeroOrderedIndex()
-	}
 
 	def log(message : Any) =
 	{

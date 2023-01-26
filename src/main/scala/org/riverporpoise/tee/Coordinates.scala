@@ -1,11 +1,12 @@
 package org.riverporpoise.tee
 
-import org.riverporpoise.tee.ProjectableInt._
 
 /**
- * Identifies a particular position on the game board. Each position can be occupied by a peg, a hold, or a void.
+ * Identifies a particular (x, y) position on the screen. Each position can be occupied by a peg, a hold, or a void.
  *
- * By long-standing alebit somewhat inconvenient tradition, coordinate indices count up from one (i.e. are "one-ordered".)
+ * Coordinate indices count up from one (i.e. are "one-ordered".)
+ *
+ * Not to be confused with the coordinates integer tuple used in the Field class (which is ordered (y, x).)
  *
  * @author dhorlick
  */
